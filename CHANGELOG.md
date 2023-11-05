@@ -4,6 +4,11 @@ All notable changes to the "Koverage" extension will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## (2023-11-05)
+- TreeNodes - FunctionCoverageNode was added, showing how many times each function was hit. It extends CoverageBaseNode.
+- TreeNodes - CoverageBaseNode was added. It extends BaseNode and CoverageNode inherits from it.
+- DataProvider - Add FunctionCoverageNode-s as children of FileCoverageNode.
+
 ## [0.0.19](https://github.com/tenninebt/vscode-koverage/compare/v0.0.18...v0.0.19) (2023-10-29)
 - chore(changelog): :memo: fix change log links
 
