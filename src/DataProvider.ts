@@ -1,3 +1,9 @@
+// ********************************************************************************************************************
+// * Ran Lehr (Early.AI) 05/11/2023                                                                                   *
+// * Changes:                                                                                                         *
+// * - Add FunctionCoverageNode-s as children of FileCoverageNode.                                                    *
+// * - Rest of changes in code took place in order to support the changes in TreeNodes.ts and above.                  *
+// ********************************************************************************************************************
 import type { Logger } from "./Logger"
 import * as fs from "fs"
 import * as iopath from "path"
@@ -9,12 +15,12 @@ import { type FilesLoader } from "./FilesLoader"
 import { type Section as CoverageSection } from "lcov-parse"
 import { WorkspaceFolderCoverage } from "./WorkspaceFolderCoverageFile"
 import * as rx from "rxjs"
-import { type BaseNode, type CoverageNode, RootCoverageNode, FolderCoverageNode, FileCoverageNode } from "./TreeNodes"
+import { type BaseNode, type CoverageBaseNode, type CoverageNode, RootCoverageNode, FolderCoverageNode, FileCoverageNode, FunctionCoverageNode } from "./TreeNodes"
 import { CoverageLevelThresholds } from "./CoverageLevel"
 
 type RefreshReason = "<RefreshCommand>" | "<ConfigUpdated>" | "<CoverageCreated>" | "<CoverageUpdated>" | "<CoverageDeleted>"
 
-export class FileCoverageDataProvider implements vscode.TreeDataProvider<CoverageNode>, vscode.Disposable {
+export class FileCoverageDataProvider implements vscode.TreeDataProvider<CoverageBaseNode>, vscode.Disposable {
 
   private readonly rootNodeKey: string
 
@@ -69,11 +75,11 @@ export class FileCoverageDataProvider implements vscode.TreeDataProvider<Coverag
     })
   }
 
-  public getTreeItem(element: CoverageNode): vscode.TreeItem {
+  public getTreeItem(element: CoverageBaseNode): vscode.TreeItem {
     return element
   }
 
-  public getChildren(element?: CoverageNode): Thenable<CoverageNode[]> {
+  public getChildren(element?: CoverageBaseNode): Thenable<CoverageBaseNode[]> {
     if (vscode.workspace.workspaceFolders == null) {
       void vscode.window.showInformationMessage("No file coverage in empty workspace")
       return Promise.resolve([])
@@ -213,8 +219,18 @@ export class FileCoverageDataProvider implements vscode.TreeDataProvider<Coverag
                   )
                 }
 
+                const functionNodes = coverageData.functions.details.map(
+                  (functionDetail: parse.FunctionDetail) =>
+                    new FunctionCoverageNode(
+                      `${absoluteFilePath}`,
+                      functionDetail.line,
+                      functionDetail.name,
+                      functionDetail.hit
+                    )
+                );
+
                 // IsLeaf node
-                node = new FileCoverageNode(absoluteFilePath, step, coverageLevelThresholds, coverageData.lines.found, coverageData.lines.hit)
+                node = new FileCoverageNode(absoluteFilePath, step, functionNodes, coverageLevelThresholds, coverageData.lines.found, coverageData.lines.hit)
               } else {
                 node = new FolderCoverageNode(absoluteFilePath, step, [], coverageLevelThresholds)
               }
@@ -261,8 +277,8 @@ export class FileCoverageDataProvider implements vscode.TreeDataProvider<Coverag
     this.refreshSubscription.unsubscribe()
   }
 
-  private readonly _onDidChangeTreeData: vscode.EventEmitter<CoverageNode | undefined> = new vscode.EventEmitter<CoverageNode | undefined>()
-  readonly onDidChangeTreeData: vscode.Event<CoverageNode | undefined> = this._onDidChangeTreeData.event
+  private readonly _onDidChangeTreeData: vscode.EventEmitter<CoverageBaseNode | undefined> = new vscode.EventEmitter<CoverageBaseNode | undefined>()
+  readonly onDidChangeTreeData: vscode.Event<CoverageBaseNode | undefined> = this._onDidChangeTreeData.event
 }
 
 
